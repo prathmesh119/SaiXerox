@@ -1,0 +1,56 @@
+:root {
+  --black: #0a0a0a;
+  --black-soft: #141414;
+  --black-card: #1a1a1a;
+  --yellow: #ffc107;
+  --yellow-bright: #ffdb4d;
+  --yellow-dim: #b38600;
+  --gray: #888;
+  --gray-light: #e0e0e0;
+  --white: #fafafa;
+  --danger: #e53935;
+  --success: #43a047;
+  --font: 'Outfit', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--black);
+  color: var(--white);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--yellow);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--yellow-bright);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
