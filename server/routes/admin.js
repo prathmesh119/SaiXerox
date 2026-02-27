@@ -15,7 +15,7 @@ export const adminRouter = Router()
 
 adminRouter.get('/orders', auth, (req, res) => {
   const orders = getAllOrders().map((o) => {
-    const { documentPath, stripeSessionId, ...rest } = o
+    const { stripeSessionId, ...rest } = o
     return rest
   })
   res.json({ orders })

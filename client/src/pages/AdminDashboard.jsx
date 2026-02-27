@@ -85,6 +85,14 @@ export default function AdminDashboard() {
     setAuthenticated(true)
   }
 
+  const getDocumentUrl = (documentPath) => {
+    if (!documentPath) return null
+    if (documentPath.startsWith('http://') || documentPath.startsWith('https://')) {
+      return documentPath
+    }
+    return documentPath.startsWith('/') ? documentPath : `/${documentPath}`
+  }
+
   if (!authenticated) {
     return (
       <div className="page admin">
@@ -131,7 +139,7 @@ export default function AdminDashboard() {
         <p className="subtitle">Update status so customers can see progress. Refresh to load new orders.</p>
         {error && <p className="error">{error}</p>}
         <button type="button" className="btn btn-outline refresh" onClick={loadOrders} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading ? 'Loading...' : 'Refresh'}
         </button>
 
         <div className="orders-list">
@@ -140,8 +148,18 @@ export default function AdminDashboard() {
             <div key={o.orderId} className="order-row">
               <div className="order-info">
                 <strong>{o.orderId}</strong>
-                <span>{o.customerName} – {o.email}</span>
-                <span>{SERVICE_LABELS[o.service] || o.service} · {o.copies}×{o.pages} · ₹{o.amount}</span>
+                <span>{o.customerName} - {o.email}</span>
+                <span>{SERVICE_LABELS[o.service] || o.service} . {o.copies}x{o.pages} . Rs{o.amount}</span>
+                {o.documentPath && (
+                  <a
+                    href={getDocumentUrl(o.documentPath)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="doc-link"
+                  >
+                    View uploaded document
+                  </a>
+                )}
               </div>
               <div className="order-actions">
                 <select
@@ -183,6 +201,7 @@ export default function AdminDashboard() {
         .order-info { display: flex; flex-direction: column; gap: 0.25rem; }
         .order-info strong { color: var(--yellow); }
         .order-info span { font-size: 0.9rem; color: var(--gray); }
+        .doc-link { font-size: 0.9rem; color: var(--yellow); text-decoration: underline; }
         .order-actions select {
           padding: 0.5rem 0.75rem;
           background: var(--black-soft);
