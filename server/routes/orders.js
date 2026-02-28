@@ -19,6 +19,23 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 })
 
+const SERVICE_PRICING = {
+  xerox_bw: 1,
+  xerox_color: 5,
+  photo: 10,
+  lamination: 15,
+}
+
+function countPdfPages(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, 'latin1')
+    const matches = raw.match(/\/Type\s*\/Page\b/g)
+    return matches ? matches.length : 0
+  } catch {
+    return 0
+  }
+}
+
 export const ordersRouter = Router()
 
 ordersRouter.post('/create', upload.single('document'), async (req, res) => {
@@ -31,18 +48,24 @@ ordersRouter.post('/create', upload.single('document'), async (req, res) => {
       customerName,
       email,
       phone,
-      amount,
     } = req.body
 
     const orderId = `SX-${uuidv4().slice(0, 8).toUpperCase()}`
-    const amountNum = parseFloat(amount) || 0
     const docPath = req.file ? `/uploads/${req.file.filename}` : null
+    const selectedService = SERVICE_PRICING[service] ? service : 'xerox_bw'
+    const copiesNum = parseInt(copies, 10) || 1
+    const submittedPages = parseInt(pages, 10) || 1
+    const isPdfUpload = req.file?.mimetype === 'application/pdf'
+    const detectedPages = isPdfUpload ? countPdfPages(req.file.path) : 0
+    const pagesNum = isPdfUpload && detectedPages > 0 ? detectedPages : submittedPages
+    const pricePerPage = SERVICE_PRICING[selectedService]
+    const amountNum = Math.round(copiesNum * pagesNum * pricePerPage * 100) / 100
 
     const order = {
       orderId,
-      service: service || 'xerox_bw',
-      copies: parseInt(copies, 10) || 1,
-      pages: parseInt(pages, 10) || 1,
+      service: selectedService,
+      copies: copiesNum,
+      pages: pagesNum,
       instructions: (instructions || '').trim(),
       customerName: (customerName || '').trim(),
       email: (email || '').trim(),

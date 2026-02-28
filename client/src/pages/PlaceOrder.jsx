@@ -13,9 +13,10 @@ export default function PlaceOrder() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [pdfPagesDetected, setPdfPagesDetected] = useState(0)
   const [form, setForm] = useState({
     service: 'xerox_bw',
-    copies: 1,
+    copies: '1',
     pages: 1,
     instructions: '',
     customerName: '',
@@ -25,19 +26,39 @@ export default function PlaceOrder() {
   })
 
   const selectedService = SERVICE_OPTIONS.find((s) => s.id === form.service)
-  const totalPages = form.copies * form.pages
+  const copiesNum = Math.min(500, Math.max(1, parseInt(form.copies, 10) || 1))
+  const totalPages = copiesNum * form.pages
   const subtotal = selectedService ? totalPages * selectedService.pricePerPage : 0
   const total = Math.round(subtotal * 100) / 100
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }))
 
-  const handleFile = (e) => {
+  const detectPdfPages = async (file) => {
+    try {
+      const buffer = await file.arrayBuffer()
+      const text = new TextDecoder('latin1').decode(buffer)
+      const matches = text.match(/\/Type\s*\/Page\b/g)
+      return matches ? matches.length : 0
+    } catch {
+      return 0
+    }
+  }
+
+  const handleFile = async (e) => {
     const file = e.target.files?.[0]
     if (file && file.size > 15 * 1024 * 1024) {
       setError('File must be under 15 MB')
       return
     }
+    let detectedPages = 0
+    if (file?.type === 'application/pdf') {
+      detectedPages = await detectPdfPages(file)
+    }
+    setPdfPagesDetected(detectedPages)
     setError('')
+    if (detectedPages > 0) {
+      update('pages', detectedPages)
+    }
     update('file', file || null)
   }
 
@@ -56,7 +77,7 @@ export default function PlaceOrder() {
     try {
       const body = new FormData()
       body.append('service', form.service)
-      body.append('copies', form.copies)
+      body.append('copies', copiesNum)
       body.append('pages', form.pages)
       body.append('instructions', form.instructions)
       body.append('customerName', form.customerName)
@@ -111,7 +132,8 @@ export default function PlaceOrder() {
                     min="1"
                     max="500"
                     value={form.copies}
-                    onChange={(e) => update('copies', parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => update('copies', e.target.value)}
+                    onBlur={() => update('copies', String(copiesNum))}
                   />
                 </div>
                 <div className="form-group">
@@ -121,8 +143,12 @@ export default function PlaceOrder() {
                     min="1"
                     max="500"
                     value={form.pages}
+                    disabled={pdfPagesDetected > 0}
                     onChange={(e) => update('pages', parseInt(e.target.value, 10) || 1)}
                   />
+                  {pdfPagesDetected > 0 && (
+                    <span className="file-name">PDF pages auto-detected: {pdfPagesDetected}</span>
+                  )}
                 </div>
               </div>
               <div className="form-group">
